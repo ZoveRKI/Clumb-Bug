@@ -13,6 +13,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Referer": "https://www.drxsw.com/"
 }
+TITLE_IS_NOT_NUMBER = []
 
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
@@ -40,11 +41,16 @@ def main():
     #     '第283章 前世今生，七情劫之色之一劫',
     #     '第284章 再遇，他秦长生，绝不会趁人之危',
     #     '第284章 我是被迫的！第二劫，傲慢',
-    #     '第285章 第三劫，暴怒，时间长河的尽头'
+    #     '番外 秦长生师徒的日常',
+    #     '第285章 第三劫，暴怒，时间长河的尽头',
     # ]
 
     for url in urls:
     # for url in test:
+        if not re.search(r'\d+', url):
+            TITLE_IS_NOT_NUMBER.append(url)
+            continue
+
         try:
             chapter = requests.get(urls[url], headers=HEADERS)
             chapter.encoding = 'utf-8'
@@ -75,11 +81,44 @@ def main():
 
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(html_content)
-
-            print(f"{filename} 写入完成 ✅")
+                print(f"{filename} 写入完成 ✅")
+                FILE_COUNT = int(match.group())
         else:
             print(f"{url} 未找到正文内容 ❌")
     pass
+
+    print(TITLE_IS_NOT_NUMBER)
+
+    if TITLE_IS_NOT_NUMBER:
+        for title_is_not_number in TITLE_IS_NOT_NUMBER:
+            try:
+                chapter = requests.get(urls[title_is_not_number], headers=HEADERS)
+                chapter.encoding = 'utf-8'
+                time.sleep(random.uniform(1.0, 2.5))
+            except Exception as e:
+                with open('error2.text', "w", encoding="utf-8") as f:
+                    f.write(f"{title_is_not_number} 请求失败：{e}")
+                continue
+
+            chapter_soup = BeautifulSoup(chapter.text, "html.parser")
+            content_div = chapter_soup.find("div", id="TextContent")
+
+            if content_div:
+                title = chapter_soup.find("div", id="mlfy_main_text").find("h1").get_text(strip=True)
+                FILE_COUNT += 1
+
+                filename = f"{FILE_COUNT}_{re.sub(r'\s+', '', title)}.html"
+                filepath = os.path.join(OUTPUT_FOLDER, filename)
+
+                text = content_div.get_text(separator='\n\n', strip=True)
+                html_content = f"<!-- {FILE_COUNT} -->\n<p>{title}\n\n{text}\n</p>"
+
+                with open(filepath, "w", encoding="utf-8") as f:
+                    f.write(html_content)
+                    print(f"{filename} 写入完成 ✅")
+            else:
+                print(f"{url} 未找到正文内容 ❌")
+        pass
 pass
 
 if __name__ == "__main__":
