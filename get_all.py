@@ -17,7 +17,7 @@ HEADERS = {
 
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-def get_all_urls(chapter_list_element, chapter_list_type, chapter_list_value, link_element):
+def get_all_urls(chapter_list_element, chapter_list_type, chapter_list_value, link_element, link_value):
     response = requests.get(BOOK_INDEX_URL, headers=HEADERS)
     response.encoding = 'utf-8'
     list_soup = BeautifulSoup(response.text, "html.parser")
@@ -25,7 +25,7 @@ def get_all_urls(chapter_list_element, chapter_list_type, chapter_list_value, li
 
     chapter_dict = {}
     for link in content_ul.find_all(link_element):
-        href = link.get("href")
+        href = link.get(link_value)
         title = link.text.strip()
 
         if href:
@@ -75,8 +75,8 @@ def extract_and_save(title, html, filename_prefix, text_element, text_type, text
         print(f"{filename} 写入完成 ✅")
     return True
 
-def main(chapter_list_element, chapter_list_type, chapter_list_value, link_element, text_element, text_type, text_value, title_element, title_type, title_value):
-    urls = get_all_urls(chapter_list_element, chapter_list_type, chapter_list_value, link_element)
+def main(chapter_list_element, chapter_list_type, chapter_list_value, link_element, link_value, text_element, text_type, text_value, title_element, title_type, title_value):
+    urls = get_all_urls(chapter_list_element, chapter_list_type, chapter_list_value, link_element, link_value)
     TITLE_IS_NOT_NUMBER = []
     FILE_COUNT = 0
 
@@ -123,6 +123,7 @@ if __name__ == "__main__":
         chapter_list_value = str(input("请输入目录所在HTML标签的名称（如chapterList）: ")).strip()
 
         link_element = str(input("请输入链接所在HTML标签（如a）: ")).strip()
+        link_value = str(input("请输入链接所在HTML标签的名称（如href）: ")).strip()
 
         text_element = str(input("请输入正文所在HTML标签（如div）: ")).strip()
         text_type = str(input("请输入正文所在HTML标签类型（如id或class_）: ")).strip()
@@ -132,7 +133,7 @@ if __name__ == "__main__":
         title_type = str(input("请输入标题所在HTML标签类型（如id或class_）: ")).strip()
         title_value = str(input("请输入标题所在HTML标签的名称（如TitleContent）: ")).strip()
 
-        main(chapter_list_element, chapter_list_type, chapter_list_value, link_element, text_element, text_type, text_value, title_element, title_type, title_value)
+        main(chapter_list_element, chapter_list_type, chapter_list_value, link_element, link_value, text_element, text_type, text_value, title_element, title_type, title_value)
     except ValueError:
         print("❌ something going wrong!")
     pass
