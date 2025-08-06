@@ -5,6 +5,7 @@ import os
 import time
 import random
 
+print("Activate drxsw")
 OUTPUT_FOLDER = "RawText"
 BASE_URL = "https://www.drxsw.com"
 TARGET_BOOK = str(input("请输入书籍ID: "))

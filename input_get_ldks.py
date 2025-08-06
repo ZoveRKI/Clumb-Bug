@@ -5,6 +5,7 @@ import os
 # import time
 # import random
 
+print("Activate ldks")
 OUTPUT_FOLDER = "RawText"
 BASE_URL = "http://23.225.121.247"
 TARGET_BOOK = str(input("请输入书籍ID: "))
