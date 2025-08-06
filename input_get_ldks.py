@@ -6,7 +6,7 @@ import os
 # import random
 
 OUTPUT_FOLDER = "RawText"
-BASE_URL = str(input("请输入网站基础URL(https://www.example.com): ")).strip()
+BASE_URL = "http://23.225.121.247"
 TARGET_BOOK = str(input("请输入书籍ID: "))
 BOOK_INDEX_URL = f"{BASE_URL}/ldks/{TARGET_BOOK}/"
 HEADERS = {
