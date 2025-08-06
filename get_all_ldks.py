@@ -2,8 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import os
-import time
-import random
+# import time
+# import random
 
 OUTPUT_FOLDER = "RawText"
 BASE_URL = "http://23.225.121.247"
@@ -16,9 +16,13 @@ HEADERS = {
 
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-def get_index_dict():
-    response = requests.get(BOOK_INDEX_URL, headers=HEADERS)
+def get_response(url):
+    response = requests.get(url, headers=HEADERS)
     response.encoding = 'utf-8'
+    return response
+
+def get_index_dict():
+    response = get_response(BOOK_INDEX_URL)
     soup = BeautifulSoup(response.text, "html.parser")
     content_select = soup.find("select", attrs={"name": "pageselect"})
 
@@ -36,8 +40,7 @@ def get_index_dict():
 def get_all_urls(index_dict):
     chapter_dict = {}
     for title, url in index_dict.items():
-        response = requests.get(url, headers=HEADERS)
-        response.encoding = 'utf-8'
+        response = get_response(url)
         # time.sleep(random.uniform(1.0, 2.5))
         soup = BeautifulSoup(response.text, "html.parser")
         content_ul = soup.find_all("ul", attrs={"class": "section-list fix"})
@@ -54,12 +57,16 @@ def get_all_urls(index_dict):
 
 def fetch_chapter_html(url):
     try:
-        response = requests.get(url, headers=HEADERS)
-        response.encoding = 'utf-8'
+        response = get_response(url)
         # time.sleep(random.uniform(1.0, 2.5))
         return response.text
     except Exception as e:
         return None, str(e)
+
+def get_text(content_div):
+    text = content_div.get_text(separator='\n\n', strip=True)
+    lines = text.split('\n\n')
+    return lines
 
 def extract_and_save(title, html, html2, filename_prefix):
     soup = BeautifulSoup(html, "html.parser")
@@ -68,18 +75,16 @@ def extract_and_save(title, html, html2, filename_prefix):
     content_div = soup.find("div", id="content")
     content_div2 = soup2.find("div", id="content")
 
-    if not content_div:
+    if not content_div or not content_div2:
         print(f"{title} 未找到正文内容 ❌")
         return False
 
-    text = content_div.get_text(separator='\n\n', strip=True)
-    lines = text.split('\n\n')
+    lines = get_text(content_div)
     del lines[1]
     del lines[-1]
     new_text = '\n\n'.join(lines)
 
-    text2 = content_div2.get_text(separator='\n\n', strip=True)
-    lines2 = text2.split('\n\n')
+    lines2 = get_text(content_div2)
     lines2 = lines2[2:]
     new_text2 = '\n\n'.join(lines2)
 
@@ -123,15 +128,16 @@ def main():
             TITLE_IS_NOT_NUMBER.append(title)
             continue
 
-        number = int(match.group())
         html = fetch_chapter_html(url)
         page2 = url.replace(".html", "_2.html")
         html2 = fetch_chapter_html(page2)
+
         if html is None:
             with open('error.txt', "a", encoding="utf-8") as f:
                 f.write(f"{title} 请求失败\n")
             continue
 
+        number = int(match.group())
         extract_and_save(title, html, html2, number)
         FILE_COUNT = max(FILE_COUNT, number)
 
@@ -142,6 +148,7 @@ def main():
         html = fetch_chapter_html(url)
         page2 = url.replace(".html", "_2.html")
         html2 = fetch_chapter_html(page2)
+
         if html is None:
             with open('error2.txt', "a", encoding="utf-8") as f:
                 f.write(f"{title} 请求失败\n")
