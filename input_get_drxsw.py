@@ -8,24 +8,27 @@ import random
 OUTPUT_FOLDER = "RawText"
 BASE_URL = str(input("请输入网站基础URL(https://www.example.com): ")).strip()
 TARGET_BOOK = str(input("请输入书籍ID: "))
-INDEX_URL = str(input("请输入书籍索引URL: "))
-BOOK_INDEX_URL = f"{INDEX_URL}/{TARGET_BOOK}/"
+BOOK_INDEX_URL = f"{BASE_URL}/book/{TARGET_BOOK}/"
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
-    "Referer": BASE_URL
+    "Referer": "https://www.drxsw.com/"
 }
 
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-def get_all_urls(chapter_list_element, chapter_list_type, chapter_list_value, link_element, link_value):
-    response = requests.get(BOOK_INDEX_URL, headers=HEADERS)
+def get_response(url):
+    response = requests.get(url, headers=HEADERS)
     response.encoding = 'utf-8'
+    return response
+
+def get_all_urls():
+    response = get_response(BOOK_INDEX_URL)
     list_soup = BeautifulSoup(response.text, "html.parser")
-    content_ul = list_soup.find(chapter_list_element, **{chapter_list_type: chapter_list_value})
+    content_ul = list_soup.find("ul", id="chapterList")
 
     chapter_dict = {}
-    for link in content_ul.find_all(link_element):
-        href = link.get(link_value)
+    for link in content_ul.find_all("a"):
+        href = link.get("href")
         title = link.text.strip()
 
         if href:
@@ -36,23 +39,21 @@ def get_all_urls(chapter_list_element, chapter_list_type, chapter_list_value, li
 
 def fetch_chapter_html(url):
     try:
-        response = requests.get(url, headers=HEADERS)
-        response.encoding = 'utf-8'
+        response = get_response(url)
         time.sleep(random.uniform(1.0, 2.5))
         return response.text
     except Exception as e:
         return None, str(e)
-pass
 
-def extract_and_save(title, html, filename_prefix, text_element, text_type, text_value, title_element, title_type, title_value):
+def extract_and_save(title, html, filename_prefix):
     soup = BeautifulSoup(html, "html.parser")
-    content_div = soup.find(text_element, **{text_type: text_value})
+    content_div = soup.find("div", id="TextContent")
 
     if not content_div:
         print(f"{title} 未找到正文内容 ❌")
         return False
 
-    title_tag = soup.find(title_element, **{title_type: title_value}).find("h1")
+    title_tag = soup.find("div", id="mlfy_main_text").find("h1")
     real_title = title_tag.get_text(strip=True) if title_tag else title
 
     text = content_div.get_text(separator='\n\n', strip=True)
@@ -75,8 +76,8 @@ def extract_and_save(title, html, filename_prefix, text_element, text_type, text
         print(f"{filename} 写入完成 ✅")
     return True
 
-def main(chapter_list_element, chapter_list_type, chapter_list_value, link_element, link_value, text_element, text_type, text_value, title_element, title_type, title_value):
-    urls = get_all_urls(chapter_list_element, chapter_list_type, chapter_list_value, link_element, link_value)
+def main():
+    urls = get_all_urls()
     TITLE_IS_NOT_NUMBER = []
     FILE_COUNT = 0
 
@@ -94,9 +95,8 @@ def main(chapter_list_element, chapter_list_type, chapter_list_value, link_eleme
                 f.write(f"{title} 请求失败\n")
             continue
 
-        extract_and_save(title, html, number, text_element, text_type, text_value, title_element, title_type, title_value)
+        extract_and_save(title, html, number)
         FILE_COUNT = max(FILE_COUNT, number)
-        pass
 
     print(TITLE_IS_NOT_NUMBER)
 
@@ -111,29 +111,10 @@ def main(chapter_list_element, chapter_list_type, chapter_list_value, link_eleme
         FILE_COUNT += 1
         clean_title = re.sub(r'\s+', '', title_is_not_number)
         extract_and_save(title, html, f"{FILE_COUNT}_{clean_title}")
-        pass
-    pass
-pass
-
 
 if __name__ == "__main__":
     try:
-        chapter_list_element = str(input("请输入目录所在HTML标签（如ul或div）: ")).strip()
-        chapter_list_type = str(input("请输入目录所在HTML标签类型（如id或class_）: ")).strip()    # class关键字冲突，所以需要加下划线
-        chapter_list_value = str(input("请输入目录所在HTML标签的名称（如chapterList）: ")).strip()
-
-        link_element = str(input("请输入链接所在HTML标签（如a）: ")).strip()
-        link_value = str(input("请输入链接所在HTML标签的名称（如href）: ")).strip()
-
-        text_element = str(input("请输入正文所在HTML标签（如div）: ")).strip()
-        text_type = str(input("请输入正文所在HTML标签类型（如id或class_）: ")).strip()
-        text_value = str(input("请输入正文所在HTML标签的名称（如TextContent）: ")).strip()
-
-        title_element = str(input("请输入标题所在HTML标签（如div）: ")).strip()
-        title_type = str(input("请输入标题所在HTML标签类型（如id或class_）: ")).strip()
-        title_value = str(input("请输入标题所在HTML标签的名称（如TitleContent）: ")).strip()
-
-        main(chapter_list_element, chapter_list_type, chapter_list_value, link_element, link_value, text_element, text_type, text_value, title_element, title_type, title_value)
+        main()
     except ValueError:
         print("❌ something going wrong!")
     pass
