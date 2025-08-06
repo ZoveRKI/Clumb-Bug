@@ -8,7 +8,7 @@ import random
 OUTPUT_FOLDER = "RawText"
 BASE_URL = "https://www.drxsw.com"
 TARGET_BOOK = "3509660"
-BOOK_INDEX_URL = f"https://www.drxsw.com/book/{TARGET_BOOK}/"
+BOOK_INDEX_URL = f"{BASE_URL}/book/{TARGET_BOOK}/"
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Referer": "https://www.drxsw.com/"
@@ -16,9 +16,13 @@ HEADERS = {
 
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-def get_all_urls():
-    response = requests.get(BOOK_INDEX_URL, headers=HEADERS)
+def get_response(url):
+    response = requests.get(url, headers=HEADERS)
     response.encoding = 'utf-8'
+    return response
+
+def get_all_urls():
+    response = get_response(BOOK_INDEX_URL)
     list_soup = BeautifulSoup(response.text, "html.parser")
     content_ul = list_soup.find("ul", id="chapterList")
 
@@ -35,8 +39,7 @@ def get_all_urls():
 
 def fetch_chapter_html(url):
     try:
-        response = requests.get(url, headers=HEADERS)
-        response.encoding = 'utf-8'
+        response = get_response(url)
         time.sleep(random.uniform(1.0, 2.5))
         return response.text
     except Exception as e:
