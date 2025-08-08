@@ -23,6 +23,7 @@ def get_response(url):
     return response
 
 def get_all_urls():
+    print("正在获取章节链接...")
     response = get_response(BOOK_INDEX_URL)
     list_soup = BeautifulSoup(response.text, "html.parser")
     content_ul = list_soup.find("ul", id="chapterList")
@@ -36,6 +37,7 @@ def get_all_urls():
             full_url = BASE_URL + href
             chapter_dict[title] = full_url
 
+    print("所有章节链接获取完成 ✅")
     return chapter_dict
 
 def fetch_chapter_html(url):

@@ -23,6 +23,7 @@ def get_response(url):
     return response
 
 def get_index_dict():
+    print("正在获取目录...")
     response = get_response(BOOK_INDEX_URL)
     soup = BeautifulSoup(response.text, "html.parser")
     content_select = soup.find("select", attrs={"name": "pageselect"})
@@ -36,9 +37,11 @@ def get_index_dict():
             full_url = BASE_URL + value
             index_dict[title] = full_url
 
+    print("目录获取完成 ✅")
     return index_dict
 
 def get_all_urls(index_dict):
+    print("正在获取章节链接...")
     chapter_dict = {}
     for title, url in index_dict.items():
         response = get_response(url)
@@ -54,6 +57,7 @@ def get_all_urls(index_dict):
                 full_url = BASE_URL + href
                 chapter_dict[title] = full_url
 
+    print("所有章节链接获取完成 ✅")
     return chapter_dict
 
 def fetch_chapter_html(url):
@@ -111,15 +115,7 @@ def extract_and_save(title, html, html2, filename_prefix):
 
 def main():
     index_dict = get_index_dict()
-    # index_dict = {
-    #     '第1章 - 20章': 'http://23.225.121.247/ldks/79859/'
-    # }
     urls = get_all_urls(index_dict)
-    # urls = {
-    #     '第1章 美女你要不要这么凶啊': 'http://23.225.121.247/ldks/79859/32182573.html',
-    #     '第2章 蓝星的穿越者都不简单': 'http://23.225.121.247/ldks/79859/32182574.html'
-    # }
-
     TITLE_IS_NOT_NUMBER = []
     FILE_COUNT = 0
 
