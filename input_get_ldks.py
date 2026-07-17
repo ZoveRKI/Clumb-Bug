@@ -113,16 +113,54 @@ def extract_and_save(title, html, html2, filename_prefix):
         print(f"{filename} 写入完成 ✅")
     return True
 
-def main():
+def get_number_range():
+    while True:
+        start_input = input("请输入起始编号（留空则不限制）: ").strip()
+        end_input = input("请输入结束编号（留空则不限制）: ").strip()
+
+        try:
+            start_number = int(start_input) if start_input else None
+            end_number = int(end_input) if end_input else None
+        except ValueError:
+            print("❌ 编号必须是正整数，请重新输入。")
+            continue
+
+        if start_number is not None and start_number <= 0:
+            print("❌ 起始编号必须大于 0，请重新输入。")
+            continue
+
+        if end_number is not None and end_number <= 0:
+            print("❌ 结束编号必须大于 0，请重新输入。")
+            continue
+
+        if (
+            start_number is not None
+            and end_number is not None
+            and start_number > end_number
+        ):
+            print("❌ 起始编号不能大于结束编号，请重新输入。")
+            continue
+
+        return start_number, end_number
+
+def main(start_number=None, end_number=None):
     index_dict = get_index_dict()
     urls = get_all_urls(index_dict)
     TITLE_IS_NOT_NUMBER = []
     FILE_COUNT = 0
+    has_number_range = start_number is not None or end_number is not None
 
     for title, url in urls.items():
         match = re.search(r'\d+', title)
         if not match:
-            TITLE_IS_NOT_NUMBER.append(title)
+            if not has_number_range:
+                TITLE_IS_NOT_NUMBER.append(title)
+            continue
+
+        number = int(match.group())
+        if start_number is not None and number < start_number:
+            continue
+        if end_number is not None and number > end_number:
             continue
 
         html = fetch_chapter_html(url)
@@ -134,7 +172,6 @@ def main():
                 f.write(f"{title} 请求失败\n")
             continue
 
-        number = int(match.group())
         extract_and_save(title, html, html2, number)
         FILE_COUNT = max(FILE_COUNT, number)
 
@@ -157,7 +194,8 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        START_NUMBER, END_NUMBER = get_number_range()
+        main(START_NUMBER, END_NUMBER)
     except ValueError:
         print("❌ something going wrong!")
     pass
