@@ -113,6 +113,21 @@ def extract_and_save(title, html, html2, filename_prefix):
         print(f"{filename} 写入完成 ✅")
     return True
 
+def get_numbering_options():
+    mode_input = input(
+        "请输入编号规则（留空使用标题数字，输入任意内容使用纯数字顺序编号）: "
+    ).strip()
+
+    if not mode_input:
+        return False, None
+
+    while True:
+        start_input = input("请输入顺序编号起始值（0 或 1）: ").strip()
+        if start_input in {"0", "1"}:
+            return True, int(start_input)
+
+        print("❌ 顺序编号起始值只能是 0 或 1，请重新输入。")
+
 def get_number_range():
     while True:
         start_input = input("请输入起始编号（留空则不限制）: ").strip()
@@ -143,9 +158,35 @@ def get_number_range():
 
         return start_number, end_number
 
-def main(start_number=None, end_number=None):
+def main(
+    start_number=None,
+    end_number=None,
+    use_sequential_numbering=False,
+    sequential_start=None,
+):
     index_dict = get_index_dict()
     urls = get_all_urls(index_dict)
+
+    if use_sequential_numbering:
+        if sequential_start not in (0, 1):
+            raise ValueError("顺序编号起始值只能是 0 或 1")
+
+        current_number = sequential_start
+        for title, url in urls.items():
+            html = fetch_chapter_html(url)
+            page2 = url.replace(".html", "_2.html")
+            html2 = fetch_chapter_html(page2)
+
+            if html is None:
+                with open('error.txt', "a", encoding="utf-8") as f:
+                    f.write(f"{title} 请求失败\n")
+                continue
+
+            if extract_and_save(title, html, html2, current_number):
+                current_number += 1
+
+        return
+
     TITLE_IS_NOT_NUMBER = []
     FILE_COUNT = 0
     has_number_range = start_number is not None or end_number is not None
@@ -194,8 +235,15 @@ def main(start_number=None, end_number=None):
 
 if __name__ == "__main__":
     try:
-        START_NUMBER, END_NUMBER = get_number_range()
-        main(START_NUMBER, END_NUMBER)
+        USE_SEQUENTIAL_NUMBERING, SEQUENTIAL_START = get_numbering_options()
+        if USE_SEQUENTIAL_NUMBERING:
+            main(
+                use_sequential_numbering=True,
+                sequential_start=SEQUENTIAL_START,
+            )
+        else:
+            START_NUMBER, END_NUMBER = get_number_range()
+            main(START_NUMBER, END_NUMBER)
     except ValueError:
         print("❌ something going wrong!")
     pass
