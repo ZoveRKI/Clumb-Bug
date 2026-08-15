@@ -5,6 +5,7 @@ def main():
     options = {
         "🌟ldks": "input_get_ldks.py",
         "🌟drxsw": "input_get_drxsw.py",
+        "🌟quanben": "input_get_quanben.py",
     }
 
     your_choice = questionary.select(
