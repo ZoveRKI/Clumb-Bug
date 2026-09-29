@@ -1,3 +1,4 @@
+import sys
 import subprocess
 import questionary
 
@@ -22,7 +23,7 @@ def main():
 
     if your_choice:
         print(f"🔄 Running {options[your_choice]}...\n")
-        subprocess.run(["python", options[your_choice]])
+        subprocess.run([sys.executable, options[your_choice]])
     else:
         print("❌ No selection, exiting program.")
 
