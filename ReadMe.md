@@ -8,3 +8,11 @@ make sure you had install:
 maybe you need `types-beautifulsoup4` to resolve warning:
 
     pip install types-beautifulsoup4
+
+# Use mise and uv
+```
+mise trust
+mise install
+
+uv sync --locked --python (mise which python | str trim)
+```
